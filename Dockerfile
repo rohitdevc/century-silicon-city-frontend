@@ -1,0 +1,57 @@
+FROM node:22.23.4-alpine AS base
+
+# =========================
+# Dependencies
+# =========================
+FROM base AS deps
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+RUN npm ci
+
+
+# =========================
+# Build
+# =========================
+FROM base AS builder
+
+WORKDIR /app
+
+ARG API_DOMAIN_NAME
+ARG NEXT_PUBLIC_PATH
+
+ENV NODE_ENV=production
+ENV PORT=2995
+ENV HOSTNAME=0.0.0.0
+ENV API_DOMAIN_NAME=$API_DOMAIN_NAME
+ENV NEXT_PUBLIC_PATH=$NEXT_PUBLIC_PATH
+
+COPY --from=deps /app/node_modules ./node_modules
+
+COPY . .
+
+RUN npm run build
+
+
+# =========================
+# Production
+# =========================
+FROM base AS runner
+
+WORKDIR /app
+
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 2995
+
+CMD ["node", "server.js"]

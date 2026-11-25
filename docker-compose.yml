@@ -1,0 +1,27 @@
+name: century-silicon-frontend
+
+services:
+  silicon:
+    container_name: century-silicon
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        API_DOMAIN_NAME: ${API_DOMAIN_NAME}
+        NEXT_PUBLIC_PATH: ${NEXT_PUBLIC_PATH}
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./public:/app/public
+
+    environment:
+      NODE_ENV: production
+      PORT: 2995
+      HOSTNAME: 0.0.0.0
+
+    ports:
+      - "2995:2995"
+
+    restart: unless-stopped

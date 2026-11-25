@@ -1,0 +1,45 @@
+import type { NextConfig } from "next";
+
+const isNetlifyDomain = process.env.URL?.includes("netlify.app");
+
+const nextConfig: NextConfig = {
+  output: "standalone",
+  async headers() {
+    if (!isNetlifyDomain) return [];
+    
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow",
+          },
+        ],
+      },
+    ];
+  },
+  basePath: '',
+  turbopack: {
+    root: __dirname,
+  },
+  reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '2996',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'cscpl.centuryrealestate.in',
+        port: '',
+        pathname: '/**'
+      },
+    ]
+  },
+};
+
+export default nextConfig;
